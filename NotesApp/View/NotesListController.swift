@@ -98,6 +98,18 @@ extension NotesListController: UITableViewDataSource, UITableViewDelegate {
         noteVC.delegate = self
         navigationController?.pushViewController(noteVC, animated: true)
     }
+    
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            let sectionTitle = Array(categorizedNotes.keys)[indexPath.section]
+            if let note = categorizedNotes[sectionTitle]?[indexPath.row] {
+                viewModel.deleteNote(note)
+                DispatchQueue.main.async {
+                    self.fetchNotes()
+                }
+            }
+        }
+    }
 
 
 }
