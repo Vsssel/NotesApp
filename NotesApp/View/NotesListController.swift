@@ -12,8 +12,10 @@ import SnapKit
 class NotesListController: UIViewController {
     private let table = UITableView()
     private let viewModel = NotesViewModel()
-
     var categorizedNotes = [String: [Note]]()
+    var filteredNotes = [Note]()
+    var isSearchActive = false
+
     
     lazy var addButton: UIBarButtonItem = {
         return UIBarButtonItem(image: UIImage(systemName: "square.and.pencil"), style: .plain, target: self, action: #selector(addButtonTapped))
@@ -24,6 +26,16 @@ class NotesListController: UIViewController {
         setupUI()
         setupBindings()
         fetchNotes()
+        setupSearchController()
+    }
+    
+    private func setupSearchController() {
+        let searchController = UISearchController(searchResultsController: nil)
+        searchController.searchResultsUpdater = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Search Notes"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
     }
 
     private func setupUI() {
@@ -70,7 +82,7 @@ extension NotesListController: UITableViewDataSource, UITableViewDelegate {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let sectionTitle = Array(categorizedNotes.keys)[section]
-        return categorizedNotes[sectionTitle]?.count ?? 0
+        return (isSearchActive ? filteredNotes : categorizedNotes[sectionTitle])?.count ?? 0
     }
 
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -83,7 +95,7 @@ extension NotesListController: UITableViewDataSource, UITableViewDelegate {
         }
 
         let sectionTitle = Array(categorizedNotes.keys)[indexPath.section]
-        let note = categorizedNotes[sectionTitle]?[indexPath.row]
+        let note = (isSearchActive ? filteredNotes : categorizedNotes[sectionTitle])?[indexPath.row]
 
         cell.configure(with: note?.title ?? "", content: note?.content ?? "")
         return cell
@@ -119,3 +131,21 @@ extension NotesListController: SingleNoteDelegate {
         fetchNotes()
     }
 }
+
+extension NotesListController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let query = searchController.searchBar.text?.lowercased(), !query.isEmpty else {
+            isSearchActive = false
+            filteredNotes = viewModel.notes ?? []
+            table.reloadData()
+            return
+        }
+        
+        isSearchActive = true
+        filteredNotes = (viewModel.notes ?? []).filter { note in
+            note.title?.lowercased().contains(query) == true || note.content?.lowercased().contains(query) == true
+        }
+        table.reloadData()
+    }
+}
+

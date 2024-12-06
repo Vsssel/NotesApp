@@ -18,7 +18,7 @@ class NotesViewModel {
     func fetchNotes() {
         do {
             notes = try context.fetch(Note.fetchRequest())
-            notesUpdated?() // This triggers the closure to update the UI.
+            notesUpdated?()
         } catch {
             print("Error fetching notes: \(error)")
         }
@@ -70,7 +70,6 @@ class NotesViewModel {
         let today = calendar.startOfDay(for: Date())
         var categorizedNotes = [String: [Note]]()
 
-        // Categorize notes
         for note in notes {
             guard let addedDate = note.addedDate else { continue }
             
@@ -79,17 +78,22 @@ class NotesViewModel {
             dateFormatter.dateStyle = .medium
             let dateString = dateFormatter.string(from: addedDate)
 
-            // Group by Today, Tomorrow, and specific months
             if calendar.isDateInToday(startOfNoteDay) {
                 categorizedNotes["Today", default: []].append(note)
-            } else if calendar.isDateInTomorrow(startOfNoteDay) {
-                categorizedNotes["Tomorrow", default: []].append(note)
+            } else if calendar.isDateInYesterday(startOfNoteDay) {
+                categorizedNotes["Yesterday", default: []].append(note)
             } else {
                 let monthString = dateFormatter.string(from: addedDate)
                 categorizedNotes[monthString, default: []].append(note)
             }
         }
         
+        for (key, value) in categorizedNotes {
+            categorizedNotes[key] = value.sorted {
+                $0.addedDate! < $1.addedDate!
+            }
+        }
+
         return categorizedNotes
     }
 

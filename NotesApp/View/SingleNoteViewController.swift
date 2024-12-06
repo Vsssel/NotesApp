@@ -16,7 +16,7 @@ class SingleNoteViewController: UIViewController {
     weak var delegate: SingleNoteDelegate?
     private let viewModel = NotesViewModel()
 
-    private var note: Note? // Store the note being edited
+    private var note: Note?
 
     private let titleTextField: UITextField = {
         let textField = UITextField()
@@ -34,7 +34,6 @@ class SingleNoteViewController: UIViewController {
         return UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTapped))
     }()
 
-    // Init method to accept an existing note
     init(note: Note? = nil) {
         self.note = note
         super.init(nibName: nil, bundle: nil)
@@ -74,7 +73,6 @@ class SingleNoteViewController: UIViewController {
     }
 
     private func setupNoteData() {
-        // If there's an existing note, populate the UI fields with it
         if let note = note {
             titleTextField.text = note.title
             contentTextView.text = note.content
@@ -89,10 +87,8 @@ class SingleNoteViewController: UIViewController {
         }
 
         if let existingNote = note {
-            // Update the existing note if editing
             viewModel.updateNote(existingNote, title: title, content: content)
         } else {
-            // Add a new note if there's no existing note
             viewModel.addNote(title: title, content: content)
         }
 
